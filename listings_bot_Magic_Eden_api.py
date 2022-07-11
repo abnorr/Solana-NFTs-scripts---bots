@@ -18,9 +18,13 @@ import traceback
 # CONSTANTS
 COINGECKO = "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd"
 LAMPORTS = 1000000000
+# we use the counter to not get limited by ME, we send a request from this script roughly every 35s
+counter = 45
+# able to pull from 20 up to 500, I mostly use the latest 40 activities (listing/bids/sales)
+limit = 40
 
 # In case script is started and the json is corrupt or empty or has only one entry, then we consider that sales to be "the old way"
-# In the old way, we simply consider all PAST transactions as processed
+# In the old way, we simply consider all the past transactions as processed
 # However in the new way, we will consider missing ids as valuable and those need to be processed
 IS_NEW_WAY = False
 REPORTED_DICT_LENGTH = False
@@ -29,7 +33,7 @@ REPORTED_DICT_LENGTH = False
 # SCRIPT_RELATED
 
 SALES_FILE_NAME = "dump_listings.txt"
-URL = 'https://api-mainnet.magiceden.dev/v2/collections/collectionName/listings?offset=0&limit=20'
+URL = f'https://api-mainnet.magiceden.dev/v2/collections/collectionName/listings?offset=0&limit={limit}'
 WEBHOOK_URL = "INSERT_DISCORD_WEBHOOK_URL"
 
 
@@ -69,27 +73,25 @@ def listings():
         sleep(1)
         if (cnt > 32000):
             cnt = 0
-        if (cnt % 30 == 0):
+        if (cnt % counter == 0):
             try:
                 P(str(datetime.utcnow()))
                 solprice = requests.get(COINGECKO, headers = {"accept":"application/json"})
                 P(solprice.json()['solana']['usd'])
                 data = beautify(URL)
             except TooManyRequests as e:
-                print("TooManyRequests")
+                P("TooManyRequests")
                 sleep(e.timeout_val)
                 sleep(1)
                 continue
             except JSONDecodeError as e:
                 P("=========")
-                P("=========")
-                print(str(e))
-                print(traceback.format_exc())
-                P("=========")
+                P(str(e))
+                P(traceback.format_exc())
                 P("=========")
                 continue
         if not data:
-            print("Data or data2 are not filled up, continuing...")
+            P("Data is not filled up, continuing...")
             continue
         cnt += 1
         
@@ -101,13 +103,13 @@ def listings():
             try:
                 file_dict = json.loads(file_content)
                 if not REPORTED_DICT_LENGTH:
-                    print(f"Listings dict length = {len(file_dict)}")
+                    P(f"Listings dict length = {len(file_dict)}")
                     REPORTED_DICT_LENGTH = True
                 if len(file_dict) > 0:
                     IS_NEW_WAY = True
             except:
                 pass
-        crtdict = [20]
+        crtdict = [limit]
         for i in range(len(crtdict)):
             crtdict = data[i]
             crtTransactionTime = datetime.strptime(crtdict['rarity']['moonrank']['crawl']['created'], "%Y-%m-%dT%H:%M:%S.%fZ")
