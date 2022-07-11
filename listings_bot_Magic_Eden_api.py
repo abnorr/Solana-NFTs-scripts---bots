@@ -135,12 +135,16 @@ def listings():
                 seller_add_exp = 'https://explorer.solana.com/address/' + str(seller_address)
                 rank = crtdict['rarity']['moonrank']['rank']
                 P(priceEQ)
-                asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+                # use this line, 139, only if you run the script on a windows server, otherwise it's not required
+                # asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
                 asyncio.run(postWebhook(mint_token, price, img, priceEQ, seller_add_exp, rank))
+                # all ok, let's consider this transaction as processed, so let's store it
                 file_dict[crt_pda]=data[i]
         with open(SALES_FILE_NAME, "w") as sales_file:
             sales_file.write(json.dumps(file_dict, indent = 2))
 
+
+# posting the listed NFT as an embed message to a Discord server, using the given WEBHOOK_URL
 async def postWebhook(mint_token, price, img, priceEQ, seller_add_exp, rank):
     async with aiohttp.ClientSession() as session:
         webhook = Webhook.from_url(WEBHOOK_URL, adapter = AsyncWebhookAdapter(session))
