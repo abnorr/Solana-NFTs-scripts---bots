@@ -28,9 +28,9 @@ REPORTED_DICT_LENGTH = False
 # ###############
 # SCRIPT_RELATED
 
-SALES_FILE_NAME = "pirates_listings.txt"
-URL = 'https://api-mainnet.magiceden.dev/v2/collections/mindfolk_pirates/listings?offset=0&limit=20'
-WEBHOOK_URL = "https://discord.com/api/webhooks/926767407622684683/FpIZ0xvn74gB13U-mM3cvYt6E2YOB96uVXa5dZ1ljvMHXAnqWcG6dTE028eJFYGItMsK"
+SALES_FILE_NAME = "dump_listings.txt"
+URL = 'https://api-mainnet.magiceden.dev/v2/collections/collectionName/listings?offset=0&limit=20'
+WEBHOOK_URL = "INSERT_DISCORD_WEBHOOK_URL"
 
 
 # ###############
@@ -121,7 +121,7 @@ def listings():
                     continue
             P(str(crtTransactionTime))
             if 'pdaAddress' in str(data[i]):
-                print('New Listing Found!')
+                P('New Listing Found!')
                 img = crtdict['extra']['img']
                 rank = crtdict['rarity']['moonrank']['rank']
                 price = crtdict['price']
@@ -147,7 +147,7 @@ async def postWebhook(mint_token, price, img, priceEQ, seller_add_exp, rank):
             description = '',
             colour=discord.Colour(0x9933FF)
         )
-        msg = "Pirate → LISTED ☠️"
+        msg = "NameOfYourNFT or use the metadata → LISTED"
         msg2 = str(price) + ' S◎L' + ' `(' + str(priceEQ) + " USD" + ')`'
         embed.set_author(name = msg)
         embed.add_field(name = "Price", value = msg2, inline = False)
