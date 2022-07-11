@@ -17,7 +17,7 @@ class poster:
 
     def tweet_image(self,url, message):
         
-        filename = 'tempImage.jpg'
+        filename = 'tempImg.jpg'
         request = requests.get(url, stream=True)
         if request.status_code == 200:
             with open(filename, 'wb') as image:
