@@ -21,7 +21,7 @@ from twitterPost import poster
 twitterPoster = poster()
 twitterPoster.twitter_api()
 
-# we use the counter to not get limited by ME, we send a request from this script roughly every 35s
+# we use the counter to not get limited by ME, we send a request from this script roughly every ~35s
 counter = 35
 # able to pull from 20 up to 500, I mostly use the latest 40 activities (listing/bids/sales)
 limit = 40
@@ -31,7 +31,7 @@ limit = 40
 COINGECKO = "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd"
 LAMPORTS = 1000000000
 
-# In case the script is run and sales is corrupt or empty or has only one entry, then we consider that sales to be "the old way"
+# In case the script is run and the sales are corrupt/empty or the file only has one entry, then we consider that sales to be "the old way"
 # in the old way, we simply consider all the past transactions as processed.
 # however in the new way, we will consider missing signatures as valuable and those must be processed
 IS_NEW_WAY = False
@@ -42,6 +42,7 @@ REPORTED_DICT_LENGTH = False
 
 SALES_FILE_NAME = "dump_sales.txt"
 URL = f'https://api-mainnet.magiceden.dev/v2/collections/collectionName/activities?offset=0&limit={limit}'
+URL_token = "https://api-mainnet.magiceden.dev/v2/tokens/"
 WEBHOOK_URL = "INSERT_DISCORD_WEBHOOK_URL"
 
 # ###############
@@ -51,7 +52,7 @@ scraper = cloudscraper.create_scraper(
     interpreter ='nodejs',
     captcha={
      'provider': '2captcha',
-     'api_key': 'c28aed587a7e8eb9b6baf7cb6d61ec3f'
+     'api_key': 'cantypeanything'
    }    
 )
 
@@ -132,7 +133,6 @@ def sales():
             scriptStartedAt = time.time()
             # here we arrive when transaction is old, we are in the new way, and transaction was not found in sales, hence it was not processed
             # so we simply continue with below script
-            #P(str(crtTransactionTime))
             if 'signature' in str(data[i]) and data[i]['type'] == 'buyNow':
                 P('New Sale Found!')
                 img = data[i]['image']
@@ -140,6 +140,9 @@ def sales():
                 seller_address = data[i]['seller']
                 buyer_address = data[i]['buyer']
                 token_mint = data[i]['tokenMint']
+                listOfStrings = [URL_token, token_mint]
+                finalURL = "".join(listOfStrings)
+                data_token = beautify(finalURL)
                 mint_token = 'https://magiceden.io/item-details/' + str(token_mint)
                 priceEQ1 = round(float(solprice.json()['solana']['usd']) * float(price), 2)
                 priceEQFinal = "$" + str(priceEQ1)
@@ -147,32 +150,32 @@ def sales():
                 buyer_add_exp = 'https://nfteyez.global/accounts/' + str(buyer_address)
                 P(priceEQFinal)
                 type = data[i]['type']
-                name = "NameOfYourNFT or use the metadata"
+                name = data_token['name']
                 # This is the Twitter message
                 msg = f"{name} → SOLD for {price} S◎L ({priceEQFinal})! \n\n\
 → {mint_token}"
                 # use this line, 154, if you run the script on a windows server, otherwise it's not needed
                 # asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-                asyncio.run(postWebhook(type, price, img, priceEQFinal, mint_token, seller_add_exp, buyer_add_exp))
+                asyncio.run(postWebhook(name, type, price, img, priceEQFinal, mint_token, seller_add_exp, buyer_add_exp))
                 # tweeting
                 twitterPoster.tweet_image(img, msg)
 
-                # all ok, let's consider this transaction as processed, so let's store it
+                # let's consider this transaction as processed and store it
                 file_dict[crt_signature] = data[i]
         with open(SALES_FILE_NAME, "w") as sales_file:
-            sales_file.write(json.dumps(file_dict, indent=2))
+            sales_file.write(json.dumps(file_dict, indent = 2))
 
 # posting it as an embed message to a Discord server, using the given WEBHOOK_URL
-async def postWebhook(type, price, img, priceEQFinal, mint_token, seller_add_exp, buyer_add_exp):
+async def postWebhook(name, type, price, img, priceEQFinal, mint_token, seller_add_exp, buyer_add_exp):
     async with aiohttp.ClientSession() as session:
-        webhook = Webhook.from_url(WEBHOOK_URL, adapter=AsyncWebhookAdapter(session))
+        webhook = Webhook.from_url(WEBHOOK_URL, adapter = AsyncWebhookAdapter(session))
         embed = discord.Embed(
             title = '',
             description = '',
             colour=discord.Colour(0x9933FF)
         )
         if type == 'buyNow':
-            msgName = "NameOfYourNFT or use the metadata → SOLD"
+            msgName = name + " → SOLD"
             msgPrice = str(price) + ' S◎L' + ' `(' + str(priceEQFinal) + " USD" + ')`'
         embed.set_author(name = msgName)
         embed.add_field(name = "Price", value = msgPrice, inline = False)
