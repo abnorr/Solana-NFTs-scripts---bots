@@ -154,7 +154,7 @@ def sales():
                 # This is the Twitter message
                 msg = f"{name} → SOLD for {price} S◎L ({priceEQFinal})! \n\n\
 → {mint_token}"
-                # use this line, 154, if you run the script on a windows server, otherwise it's not needed
+                # only use this line, 158, if you run the script on a Windows server, otherwise it's not needed
                 # asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
                 asyncio.run(postWebhook(name, type, price, img, priceEQFinal, mint_token, seller_add_exp, buyer_add_exp))
                 # tweeting
